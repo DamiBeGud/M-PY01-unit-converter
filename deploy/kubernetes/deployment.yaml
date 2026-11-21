@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ba-py01-release-verification
+  namespace: deployflow-test
+  labels: &id001
+    app.kubernetes.io/name: ba-py01-release-verification
+    app.kubernetes.io/managed-by: deployflow
+    app.kubernetes.io/instance: cb21ec96-b34e-404f-8ce0-b899b0b2161e
+spec:
+  replicas: 1
+  selector:
+    matchLabels: *id001
+  template:
+    metadata:
+      labels: *id001
+      annotations:
+        deployflow.io/config-sha256: 702f2fc3a5bf300771539bbc1c57b1239c42783a421f20df5af188ee1753e463
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: ba-py01-release-verification
+        image: ghcr.io/damibegud/m-py01-unit-converter:0a4e569f750b7450b650db96522adee27dd34428
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8201
+          name: http
+        envFrom:
+        - configMapRef:
+            name: ba-py01-release-verification-config
+        env: []
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        readinessProbe:
+          httpGet:
+            path: /status
+            port: http
+        livenessProbe:
+          httpGet:
+            path: /status
+            port: http
